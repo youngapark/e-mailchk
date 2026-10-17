@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우체부 로봇 핑키의 이메일 특급 배달!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-jua {
+            font-family: 'Jua', sans-serif;
+        }
+        .slot-target.drag-over {
+            background-color: #fef08a !important;
+            border-color: #f59e0b !important;
+            transform: scale(1.05);
+        }
+        .bounce-hover:hover {
+            transform: translateY(-3px);
+        }
+        @keyframes gentle-wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-3deg); }
+            75% { transform: rotate(3deg); }
+        }
+        .animate-wiggle {
+            animation: gentle-wiggle 1.8s infinite ease-in-out;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .pulse-effect {
+            animation: pulse-ring 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-sky-100 via-amber-50 to-indigo-100 min-h-screen text-slate-800 flex flex-col justify-between">
+
+    <header class="w-full bg-white/90 backdrop-blur border-b border-indigo-100 shadow-sm px-4 py-3 sticky top-0 z-30">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="goToStage(0)">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-500 text-white flex items-center justify-center text-xl shadow-md shadow-indigo-200">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                </div>
+                <div>
+                    <h1 class="font-jua text-xl md:text-2xl text-indigo-700 tracking-wide flex items-center gap-2">
+                        <span>이메일 특급 배달부!</span>
+                        <span class="text-xs font-sans bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">초등 4~6학년</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">아이디부터 골뱅이(@), 도메인까지 완벽 마스터하기</p>
+                </div>
+            </div>
+
+            <!-- 스코어 및 단계 인디케이터 -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <button onclick="goToStage(0)" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl text-xs sm:text-sm flex items-center gap-1.5 border border-indigo-200 transition shadow-sm" title="처음 페이지로 이동">
+                    <i class="fa-solid fa-house"></i>
+                    <span>홈으로</span>
+                </button>
+                <div class="bg-amber-100 text-amber-800 px-3 py-1 rounded-xl text-sm font-bold flex items-center gap-1.5 border border-amber-200 shadow-inner">
+                    <i class="fa-solid fa-star text-amber-500"></i>
+                    <span>별점: <span id="total-score" class="font-jua text-base text-amber-900">0</span></span>
+                </div>
+                <button id="sound-btn" onclick="toggleAudio()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition" title="소리 켜기/끄기">
+                    <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl w-full mx-auto p-4 sm:p-6 flex-grow flex flex-col justify-center">
+
+        <!-- 0. 홈 / 스테이지 선택 대시보드 -->
+        <div id="view-home" class="space-y-6">
+            <!-- 친근한 인트로 캐릭터 배너 -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-indigo-100 relative overflow-hidden flex flex-col md:flex-row items-center gap-6">
+                <div class="w-32 h-32 sm:w-40 sm:h-40 flex-shrink-0 relative">
+                    <!-- 우체부 로봇 SVG 일러스트 -->
+                    <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-lg animate-wiggle">
+                        <circle cx="100" cy="100" r="90" fill="#e0e7ff"/>
+                        <!-- 모자 -->
+                        <path d="M60 65 Q100 45 140 65 L145 75 Q100 65 55 75 Z" fill="#4f46e5"/>
+                        <circle cx="100" cy="52" r="8" fill="#fbbf24"/>
+                        <!-- 얼굴 모니터 -->
+                        <rect x="50" y="70" width="100" height="75" rx="20" fill="#38bdf8" stroke="#0284c7" stroke-width="6"/>
+                        <!-- 화면 안 눈, 입 -->
+                        <circle cx="80" cy="105" r="8" fill="#0f172a"/>
+                        <circle cx="120" cy="105" r="8" fill="#0f172a"/>
+                        <circle cx="83" cy="102" r="3" fill="#ffffff"/>
+                        <circle cx="123" cy="102" r="3" fill="#ffffff"/>
+                        <path d="M92 120 Q100 128 108 120" stroke="#0f172a" stroke-width="4" stroke-linecap="round" fill="none"/>
+                        <!-- 볼터치 -->
+                        <ellipse cx="72" cy="115" rx="6" ry="4" fill="#f43f5e" opacity="0.6"/>
+                        <ellipse cx="128" cy="115" rx="6" ry="4" fill="#f43f5e" opacity="0.6"/>
+                        <!-- 편지 봉투 손에 든 모습 -->
+                        <rect x="35" y="130" width="45" height="30" rx="4" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+                        <path d="M35 130 L57 148 L80 130" fill="none" stroke="#64748b" stroke-width="2"/>
+                        <text x="54" y="152" font-size="12" fill="#ef4444" font-weight="bold">@</text>
+                    </svg>
+                </div>
+                <div class="text-center md:text-left flex-grow">
+                    <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full mb-2">디지털 우체통 사전 훈련소</span>
+                    <h2 class="font-jua text-2xl sm:text-3xl text-slate-800 mb-2">"이메일 주소, 하나만 틀려도 편지가 길을 잃어요!"</h2>
+                    <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
+                        친구와 선생님께 메일을 보내기 전, <strong class="text-indigo-600">아이디</strong>, <strong class="text-amber-600">@(골뱅이)</strong>, <strong class="text-emerald-600">도메인 주소</strong>의 규칙을 재미있는 게임으로 완벽하게 익혀보세요!
+                    </p>
+                </div>
+            </div>
+
+            <!-- 스테이지 선택 카드 그리드 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- 1단계 카드 -->
+                <div onclick="startStage(1)" class="bg-white rounded-2xl p-5 border-2 border-indigo-100 hover:border-indigo-400 shadow-md hover:shadow-xl transition cursor-pointer flex gap-4 items-center group">
+                    <div class="w-14 h-14 rounded-2xl bg-indigo-500 text-white flex items-center justify-center text-2xl group-hover:scale-110 transition shadow-md">
+                        1
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-jua text-lg text-slate-800">1단계: 주소 블록 맞추기</h3>
+                            <span class="text-xs bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded">기초</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">아이디, @, 도메인 블록을 순서대로 끌어와서 주소를 완성해요.</p>
+                    </div>
+                </div>
+
+                <!-- 2단계 카드 -->
+                <div onclick="startStage(2)" class="bg-white rounded-2xl p-5 border-2 border-indigo-100 hover:border-emerald-400 shadow-md hover:shadow-xl transition cursor-pointer flex gap-4 items-center group">
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-2xl group-hover:scale-110 transition shadow-md">
+                        2
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-jua text-lg text-slate-800">2단계: 키보드 실전 타이핑</h3>
+                            <span class="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded">입력 훈련</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">영문 소문자, @, 점(.)을 직접 키보드로 오타 없이 입력해 봐요.</p>
+                    </div>
+                </div>
+
+                <!-- 3단계 카드 -->
+                <div onclick="startStage(3)" class="bg-white rounded-2xl p-5 border-2 border-indigo-100 hover:border-rose-400 shadow-md hover:shadow-xl transition cursor-pointer flex gap-4 items-center group">
+                    <div class="w-14 h-14 rounded-2xl bg-rose-500 text-white flex items-center justify-center text-2xl group-hover:scale-110 transition shadow-md">
+                        3
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-jua text-lg text-slate-800">3단계: 수상한 오타 탐정소</h3>
+                            <span class="text-xs bg-rose-100 text-rose-700 font-bold px-2 py-0.5 rounded">디지털 시민</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">띄어쓰기, 쉼표, 한글 오타 등 반송될 주소를 콕 집어내요!</p>
+                    </div>
+                </div>
+
+                <!-- 4단계 카드 -->
+                <div onclick="startStage(4)" class="bg-white rounded-2xl p-5 border-2 border-indigo-100 hover:border-purple-400 shadow-md hover:shadow-xl transition cursor-pointer flex gap-4 items-center group">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-500 text-white flex items-center justify-center text-2xl group-hover:scale-110 transition shadow-md">
+                        4
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-jua text-lg text-slate-800">4단계: 나만의 첫 이메일 명함</h3>
+                            <span class="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded">실습 & 발급</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">내 영문 아이디를 직접 만들고 올바른 이메일 명함을 완성해요.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-stage-1" class="hidden space-y-5">
+            <div class="flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-indigo-100">
+                <button onclick="goToStage(0)" class="text-sm font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-left"></i> 홈으로
+                </button>
+                <div class="text-center">
+                    <span class="text-xs font-bold text-indigo-500">1단계: 주소 블록 맞추기</span>
+                    <h3 class="font-jua text-lg text-slate-800" id="s1-mission-title">미션 1/3</h3>
+                </div>
+                <div class="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-lg font-bold">
+                    문제 <span id="s1-cur-idx">1</span> / 3
+                </div>
+            </div>
+
+            <!-- 미션 안내 박스 -->
+            <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 text-center">
+                <p class="text-sm text-indigo-900 font-semibold mb-1">
+                    🎯 목표 이메일: <span id="s1-target-email" class="font-mono text-base font-bold text-indigo-600 bg-white px-2 py-0.5 rounded border border-indigo-200"></span>
+                </p>
+                <p class="text-xs text-slate-500">아래 흩어진 블록들을 차례대로 빈 슬롯으로 드래그하거나 클릭하여 채워보세요!</p>
+            </div>
+
+            <!-- 타겟 조립 슬롯들 -->
+            <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-200 text-center">
+                <div class="text-xs text-slate-400 font-semibold mb-3">순서: [아이디] + [@] + [도메인 서비스] + [국가/분류(최상위)]</div>
+                
+                <div id="s1-slots-container" class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 min-h-[70px] p-3 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-300">
+                    <!-- JS로 동적 생성되는 슬롯 -->
+                </div>
+            </div>
+
+            <!-- 선택 가능한 블록들 -->
+            <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-200">
+                <div class="text-xs font-bold text-slate-500 mb-3 flex items-center justify-between">
+                    <span>흩어진 부품 블록 (클릭하거나 끌어당기세요)</span>
+                    <button onclick="resetStage1Blocks()" class="text-xs text-rose-500 hover:underline"><i class="fa-solid fa-rotate-right mr-1"></i>다시 놓기</button>
+                </div>
+                <div id="s1-source-container" class="flex flex-wrap items-center justify-center gap-3 min-h-[60px]">
+                    <!-- JS로 생성될 섞인 조각들 -->
+                </div>
+            </div>
+
+            <!-- 확인 버튼 및 피드백 -->
+            <div class="flex items-center justify-between">
+            <div id="s1-feedback" class="text-sm font-bold min-h-[24px]"></div>
+            <button id="s1-check-btn" onclick="checkStage1Answer()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-jua text-lg px-6 py-2.5 rounded-2xl shadow-lg shadow-indigo-200 transition">
+                배달 검사하기! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- 2단계: 키보드 직접 타이핑 훈련 -->
+    <div id="view-stage-2" class="hidden space-y-5">
+        <div class="flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-indigo-100">
+            <button onclick="goToStage(0)" class="text-sm font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left"></i> 홈으로
+            </button>
+            <div class="text-center">
+                <span class="text-xs font-bold text-emerald-600">2단계: 키보드 실전 타이핑</span>
+                <h3 class="font-jua text-lg text-slate-800">오타 없는 주소 입력</h3>
+            </div>
+            <div class="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-lg font-bold">
+                문제 <span id="s2-cur-idx">1</span> / 3
+            </div>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
+            <p class="text-sm text-emerald-950 font-semibold mb-1">
+                🎯 정확히 입력할 목표 이메일:
+            </p>
+            <div id="s2-target-text" class="font-mono text-xl sm:text-2xl font-extrabold text-emerald-700 tracking-wider bg-white py-2 px-4 rounded-xl border border-emerald-300 inline-block mt-1 shadow-sm select-all">
+                teacher.kim@school.kr
+            </div>
+            <p class="text-xs text-slate-500 mt-2">영어 소문자, 점(.), 골뱅이(@)를 키보드로 한 글자씩 차례대로 입력하세요.</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-200 space-y-4">
+            <div>
+                <label for="s2-input" class="block text-xs font-bold text-slate-600 mb-2">아래 입력창에 똑같이 쳐보세요:</label>
+                <div class="relative">
+                    <input type="text" id="s2-input" autocomplete="off" spellcheck="false" placeholder="여기에 이메일 주소를 입력하세요..." class="w-full text-base sm:text-xl font-mono px-4 py-3.5 rounded-2xl border-2 border-slate-300 focus:border-emerald-500 focus:outline-none transition pr-12 shadow-inner">
+                    <button type="button" onclick="clearS2Input()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 text-sm" title="지우기">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+                <div id="s2-realtime-helper" class="min-h-[22px] mt-2 text-xs font-bold text-slate-500"></div>
+            </div>
+
+            <!-- 자주 헷갈리는 기호 터치 패드 지원 -->
+            <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                <span class="text-xs font-bold text-slate-500 flex items-center gap-1">
+                    <i class="fa-solid fa-keyboard text-emerald-500"></i> 기호 터치 보조:
+                </span>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="insertCharToS2('@')" class="px-3 py-1.5 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 rounded-xl font-mono font-bold text-sm border border-slate-200 transition">
+                        @ (골뱅이)
+                    </button>
+                    <button type="button" onclick="insertCharToS2('.')" class="px-3 py-1.5 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 rounded-xl font-mono font-bold text-sm border border-slate-200 transition">
+                        . (마침표)
+                    </button>
+                    <button type="button" onclick="insertCharToS2('_')" class="px-3 py-1.5 bg-slate-100 hover:bg-emerald-100 hover:text-emerald-800 text-slate-700 rounded-xl font-mono font-bold text-sm border border-slate-200 transition">
+                        _ (밑줄)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end">
+            <button id="s2-check-btn" onclick="checkStage2Answer()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-jua text-lg px-7 py-3 rounded-2xl shadow-lg shadow-emerald-200 transition">
+                입력 완료 및 발송! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- 3단계: 수상한 오타 탐정소 (디지털 시민 오류 분석) -->
+    <div id="view-stage-3" class="hidden space-y-5">
+        <div class="flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-indigo-100">
+            <button onclick="goToStage(0)" class="text-sm font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left"></i> 홈으로
+            </button>
+            <div class="text-center">
+                <span class="text-xs font-bold text-rose-500">3단계: 수상한 오타 탐정소</span>
+                <h3 class="font-jua text-lg text-slate-800">오류 주소 밝혀내기</h3>
+            </div>
+            <div class="text-xs bg-rose-100 text-rose-800 px-2 py-1 rounded-lg font-bold">
+                사건 <span id="s3-cur-idx">1</span> / 4
+            </div>
+        </div>
+
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-5 text-center">
+            <span class="inline-block bg-rose-200 text-rose-900 text-xs font-bold px-2.5 py-1 rounded-full mb-2">
+                🚨 편지가 배달되지 못하고 반송되었습니다!
+            </span>
+            <div class="mt-2 mb-1">
+                <span class="text-xs text-slate-500 block mb-1">반송된 잘못된 이메일 주소:</span>
+                <span id="s3-problem-email" class="font-mono text-xl sm:text-2xl font-black text-rose-600 bg-white px-4 py-1.5 rounded-xl border border-rose-300 inline-block shadow-sm">
+                    chulsoo 2026@gmail.com
+                </span>
+            </div>
+            <p class="text-xs text-slate-600 mt-2">이 주소는 왜 배달되지 못했을까요? 무엇이 잘못되었는지 선택지를 골라보세요!</p>
+        </div>
+
+        <!-- 보기 선택 목록 -->
+        <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border border-slate-200 space-y-3">
+            <h4 class="text-xs font-bold text-slate-500 mb-2">탐정의 추리 선택 (클릭):</h4>
+            <div id="s3-choices-container" class="space-y-2.5">
+                <!-- JS 동적 생성 -->
+            </div>
+
+            <!-- 해설 박스 -->
+            <div id="s3-explanation" class="hidden mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-950 leading-relaxed">
+            </div>
+        </div>
+
+        <div class="flex justify-end">
+            <button id="s3-next-btn" onclick="nextStage3Question()" class="hidden bg-rose-600 hover:bg-rose-700 text-white font-jua text-lg px-7 py-3 rounded-2xl shadow-lg shadow-rose-200 transition">
+                다음 사건 해결하기 ➔
+            </button>
+        </div>
+    </div>
+
+    <!-- 4단계: 나만의 첫 이메일 명함 발급 -->
+    <div id="view-stage-4" class="hidden space-y-5">
+        <div class="flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-indigo-100">
+            <button onclick="goToStage(0)" class="text-sm font-bold text-slate-500 hover:text-indigo-600 flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left"></i> 홈으로
+            </button>
+            <div class="text-center">
+                <span class="text-xs font-bold text-purple-600">4단계: 나만의 첫 이메일 명함</span>
+                <h3 class="font-jua text-lg text-slate-800">디지털 명함 발급 실습</h3>
+            </div>
+            <div class="text-xs bg-purple-100 text-purple-800 px-2.5 py-1 rounded-lg font-bold">
+                최종 수료
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- 입력 폼 -->
+            <div class="bg-white rounded-3xl p-6 shadow-md border border-slate-200 space-y-4">
+                <h4 class="font-jua text-lg text-slate-800 border-b pb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-id-card-clip text-purple-500"></i> 내 명함 정보 작성
+                </h4>
+
+                <div>
+                    <label for="s4-name" class="block text-xs font-bold text-slate-600 mb-1">내 이름 또는 멋진 별명</label>
+                    <input type="text" id="s4-name" oninput="updateCardPreview()" placeholder="예: 김꿈나무" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-purple-500 focus:outline-none transition">
+                </div>
+
+                <div>
+                    <label for="s4-id" class="block text-xs font-bold text-slate-600 mb-1">희망하는 영문 아이디 (소문자/숫자)</label>
+                    <input type="text" id="s4-id" oninput="sanitizeAndPreviewId()" placeholder="예: dreamtree2026" class="w-full font-mono text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-purple-500 focus:outline-none transition">
+                    <p class="text-[11px] text-slate-400 mt-1">※ 한글이나 띄어쓰기는 자동으로 올바른 소문자 기호로 교정됩니다.</p>
+                </div>
+
+                <div>
+                    <label for="s4-domain-select" class="block text-xs font-bold text-slate-600 mb-1">사용할 메일 서비스(우체국 도메인)</label>
+                    <select id="s4-domain-select" onchange="handleDomainChange()" class="w-full text-sm px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-purple-500 focus:outline-none bg-white">
+                        <option value="icees.go.kr">교육청 학교 계정 (@icees.go.kr)</option>
+                        <option value="school.kr">일반 학교 서버 (@school.kr)</option>
+                        <option value="gmail.com">구글 메일 (@gmail.com)</option>
+                        <option value="naver.com">네이버 메일 (@naver.com)</option>
+                        <option value="daum.net">다음 메일 (@daum.net)</option>
+                        <option value="custom">✏️ 도메인 직접 입력하기</option>
+                    </select>
+                </div>
+
+                <div id="s4-custom-domain-box" class="hidden">
+                    <label for="s4-custom-domain" class="block text-xs font-bold text-purple-700 mb-1">
+                        <i class="fa-solid fa-pen-to-square"></i> 도메인 직접 입력 (@ 뒷부분)
+                    </label>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-base font-bold text-slate-400 font-mono">@</span>
+                        <input type="text" id="s4-custom-domain" oninput="sanitizeAndPreviewCustomDomain()" placeholder="예: icees.go.kr 또는 goe.go.kr" class="w-full font-mono text-sm px-3.5 py-2 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none transition">
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">※ 학교나 교육청에서 받은 도메인(예: icees.go.kr)을 마침표(.)와 함께 적어주세요.</p>
+                </div>
+
+                <div class="bg-purple-50 rounded-2xl p-3 space-y-1.5 text-xs text-purple-900">
+                    <div class="font-bold mb-1">규칙 검사 체크리스트:</div>
+                    <div id="s4-check-eng" class="flex items-center gap-1.5"></div>
+                    <div id="s4-check-at" class="flex items-center gap-1.5"></div>
+                    <div id="s4-check-domain" class="flex items-center gap-1.5"></div>
+                </div>
+
+                <button onclick="finalizeCard()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-jua text-base py-3 rounded-2xl shadow-lg shadow-purple-200 transition">
+                    명함 완성 및 배달부 인증서 발급! 🎓
+                </button>
+            </div>
+
+            <!-- 명함 미리보기 카드 -->
+            <div class="flex flex-col justify-between bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden min-h-[260px]">
+                <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-[11px] tracking-widest uppercase font-bold bg-white/20 backdrop-blur px-2.5 py-1 rounded-full">Digital Mail Explorer</span>
+                        <i class="fa-solid fa-stamp text-2xl text-amber-300"></i>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-xs text-indigo-100 font-medium">소유자 이름</p>
+                        <h3 id="preview-name" class="font-jua text-2xl sm:text-3xl text-white tracking-wide">꿈나무 친구</h3>
+                    </div>
+                </div>
+
+                <div class="bg-black/20 backdrop-blur-md p-3.5 rounded-2xl border border-white/20 my-4">
+                    <p class="text-[10px] text-indigo-200 font-semibold mb-1">인터넷 전자우편 주소</p>
+                    <p id="preview-email" class="font-mono text-sm sm:text-base font-bold text-amber-200 break-all select-all">
+                        myid2026@school.kr
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-white/20 text-xs text-indigo-100">
+                    <span>디지털 시민 인증 완료</span>
+                    <button onclick="copyGeneratedEmail()" class="bg-white text-purple-700 hover:bg-amber-100 font-bold px-3 py-1 rounded-xl transition shadow flex items-center gap-1">
+                        <i class="fa-solid fa-copy"></i> 복사하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+    <div id="custom-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden select-none" onclick="handleBackdropClick(event)">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-7 text-center shadow-2xl border border-indigo-100 space-y-4 transform transition-all relative z-10" onclick="event.stopPropagation()">
+            <div id="modal-icon-container" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-3xl bg-amber-100 text-amber-600 shadow-inner">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            <h3 id="modal-title" class="font-jua text-xl text-slate-800">축하합니다!</h3>
+            <div id="modal-desc" class="text-sm text-slate-600 leading-relaxed max-h-60 overflow-y-auto">단계별 설명 메시지</div>
+            <div id="modal-action-container" class="pt-3">
+                <button type="button" id="modal-confirm-btn" class="w-full py-3.5 px-6 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-jua text-lg rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-none transition-all cursor-pointer select-none touch-manipulation focus:outline-none focus:ring-4 focus:ring-indigo-300">
+                    확인
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="w-full bg-white/70 border-t border-slate-200 text-center py-3 text-xs text-slate-500">
+        초등학교 실과 및 창체 디지털 리터러시 교육 보조용 | 안전하고 즐거운 이메일 첫걸음 🚀
+    </footer>
+
+    <script>
+        // 전역 상태 변수
+        let currentStage = 0;
+        let totalScore = 0;
+        let audioEnabled = true;
+        let synth = null;
+
+        // 효과음 재생 시스템 (Tone.js 활용)
+        function initAudio() {
+            if (!synth && window.Tone) {
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                synth.volume.value = -8;
+            }
+        }
+
+        function playSound(type) {
+            if (!audioEnabled) return;
+            try {
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+                initAudio();
+                if (!synth) return;
+
+                const now = Tone.now();
+                if (type === 'correct') {
+                    synth.triggerAttackRelease(["C5", "E5", "G5"], "16n", now);
+                } else if (type === 'wrong') {
+                    synth.triggerAttackRelease(["F3", "D3"], "16n", now);
+                } else if (type === 'drop') {
+                    synth.triggerAttackRelease("A4", "32n", now);
+                } else if (type === 'complete') {
+                    synth.triggerAttackRelease(["C4", "G4", "C5", "E5"], "8n", now);
+                }
+            } catch (e) {
+                console.debug("Audio play issue", e);
+            }
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('sound-icon');
+            if (audioEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                playSound('drop');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+            }
+        }
+
+        function addScore(points) {
+            totalScore += points;
+            document.getElementById('total-score').innerText = totalScore;
+        }
+
+        // 화면 전환 함수
+        function goToStage(stageNum) {
+            currentStage = stageNum;
+            const views = [
+                document.getElementById('view-home'),
+                document.getElementById('view-stage-1'),
+                document.getElementById('view-stage-2'),
+                document.getElementById('view-stage-3'),
+                document.getElementById('view-stage-4')
+            ];
+
+            views.forEach((v, idx) => {
+                if (idx === stageNum) {
+                    v.classList.remove('hidden');
+                } else {
+                    v.classList.add('hidden');
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function startStage(stageNum) {
+            goToStage(stageNum);
+            if (stageNum === 1) initStage1();
+            if (stageNum === 2) initStage2();
+            if (stageNum === 3) initStage3();
+            if (stageNum === 4) initStage4();
+        }
+
+        const s1Questions = [
+            {
+                fullEmail: "happycat@gmail.com",
+                parts: [
+                    { id: "p1", text: "happycat", type: "id", label: "아이디(받는 사람)" },
+                    { id: "p2", text: "@", type: "at", label: "구분 기호(골뱅이)" },
+                    { id: "p3", text: "gmail", type: "domain", label: "메일 서비스 회사" },
+                    { id: "p4", text: ".com", type: "tld", label: "인터넷 분류" }
+                ]
+            },
+            {
+                fullEmail: "cool_bear@naver.com",
+                parts: [
+                    { id: "p1", text: "cool_bear", type: "id", label: "아이디(받는 사람)" },
+                    { id: "p2", text: "@", type: "at", label: "구분 기호(골뱅이)" },
+                    { id: "p3", text: "naver", type: "domain", label: "메일 서비스 회사" },
+                    { id: "p4", text: ".com", type: "tld", label: "인터넷 분류" }
+                ]
+            },
+            {
+                fullEmail: "star2026@school.kr",
+                parts: [
+                    { id: "p1", text: "star2026", type: "id", label: "아이디(학생/학급)" },
+                    { id: "p2", text: "@", type: "at", label: "구분 기호(골뱅이)" },
+                    { id: "p3", text: "school", type: "domain", label: "학교 서버" },
+                    { id: "p4", text: ".kr", type: "tld", label: "대한민국 국가 도메인" }
+                ]
+            }
+        ];
+
+        let s1CurIndex = 0;
+        let s1UserSlots = []; // 현재 슬롯에 들어간 블록 데이터
+
+        function initStage1() {
+            s1CurIndex = 0;
+            loadStage1Question(s1CurIndex);
+        }
+
+        function loadStage1Question(index) {
+            const q = s1Questions[index];
+            document.getElementById('s1-cur-idx').innerText = index + 1;
+            document.getElementById('s1-mission-title').innerText = `미션 ${index + 1}/3`;
+            document.getElementById('s1-target-email').innerText = q.fullEmail;
+            document.getElementById('s1-feedback').innerText = '';
+
+            const slotsContainer = document.getElementById('s1-slots-container');
+            const sourceContainer = document.getElementById('s1-source-container');
+            slotsContainer.innerHTML = '';
+            sourceContainer.innerHTML = '';
+            s1UserSlots = new Array(q.parts.length).fill(null);
+
+            // 타겟 슬롯 렌더링
+            q.parts.forEach((p, sIdx) => {
+                const slot = document.createElement('div');
+                slot.className = "slot-target flex-1 min-w-[70px] sm:min-w-[100px] h-14 bg-white rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-1 transition cursor-pointer";
+                slot.dataset.slotIndex = sIdx;
+                slot.innerHTML = `<span class="text-[10px] text-slate-400 font-bold">${sIdx + 1}번째 자리</span><span class="text-xs text-indigo-400 font-bold">${p.label.split('(')[0]}</span>`;
+                
+                // 드래그 앤 드롭 이벤트
+                slot.ondragover = (e) => { e.preventDefault(); slot.classList.add('drag-over'); };
+                slot.ondragleave = () => { slot.classList.remove('drag-over'); };
+                slot.ondrop = (e) => {
+                    e.preventDefault();
+                    slot.classList.remove('drag-over');
+                    const partId = e.dataTransfer.getData('text/plain');
+                    placeBlockInSlot(partId, sIdx);
+                };
+                slot.onclick = () => {
+                    // 슬롯에 블록이 있으면 되돌리기
+                    if (s1UserSlots[sIdx]) {
+                        returnBlockToSource(s1UserSlots[sIdx].id);
+                    }
+                };
+
+                slotsContainer.appendChild(slot);
+            });
+
+            // 원본 블록 섞기 (셔플)
+            const shuffled = [...q.parts].sort(() => Math.random() - 0.5);
+            shuffled.forEach(p => {
+                const block = createDraggableBlock(p);
+                sourceContainer.appendChild(block);
+            });
+        }
+
+        function createDraggableBlock(part) {
+            const div = document.createElement('div');
+            div.id = `block-${part.id}`;
+            div.draggable = true;
+            div.className = "px-4 py-2.5 bg-indigo-50 border-2 border-indigo-200 hover:border-indigo-400 text-indigo-900 rounded-2xl font-mono font-bold text-sm sm:text-base cursor-grab active:cursor-grabbing shadow-sm hover:scale-105 transition flex items-center gap-1.5";
+            div.innerHTML = `<span>${part.text}</span> <span class="text-[10px] text-indigo-400 font-sans font-normal">(${part.label})</span>`;
+
+            div.ondragstart = (e) => {
+                e.dataTransfer.setData('text/plain', part.id);
+            };
+
+            // 터치 디바이스나 드래그가 어려운 아이들을 위한 클릭 지원
+            div.onclick = () => {
+                // 첫 번째 빈 슬롯 찾기
+                const emptySlotIdx = s1UserSlots.findIndex(s => s === null);
+                if (emptySlotIdx !== -1) {
+                    placeBlockInSlot(part.id, emptySlotIdx);
+                }
+            };
+
+            return div;
+        }
+
+        function placeBlockInSlot(partId, slotIdx) {
+            const q = s1Questions[s1CurIndex];
+            const partObj = q.parts.find(p => p.id === partId);
+            if (!partObj) return;
+
+            // 이미 슬롯에 들어있다면 이전 슬롯에서 제거
+            const prevSlot = s1UserSlots.findIndex(s => s && s.id === partId);
+            if (prevSlot !== -1) {
+                s1UserSlots[prevSlot] = null;
+                updateSlotDisplay(prevSlot);
+            }
+
+            // 현재 슬롯에 기존 블록이 있다면 복귀
+            if (s1UserSlots[slotIdx]) {
+                returnBlockToSource(s1UserSlots[slotIdx].id);
+            }
+
+            s1UserSlots[slotIdx] = partObj;
+            updateSlotDisplay(slotIdx);
+
+            // 소스 목록에서 숨김
+            const blockEl = document.getElementById(`block-${partId}`);
+            if (blockEl) blockEl.classList.add('hidden');
+
+            playSound('drop');
+        }
+
+        function returnBlockToSource(partId) {
+            const slotIdx = s1UserSlots.findIndex(s => s && s.id === partId);
+            if (slotIdx !== -1) {
+                s1UserSlots[slotIdx] = null;
+                updateSlotDisplay(slotIdx);
+            }
+            const blockEl = document.getElementById(`block-${partId}`);
+            if (blockEl) blockEl.classList.remove('hidden');
+            playSound('drop');
+        }
+
+        function updateSlotDisplay(slotIdx) {
+            const slotsContainer = document.getElementById('s1-slots-container');
+            const slot = slotsContainer.children[slotIdx];
+            const part = s1UserSlots[slotIdx];
+            const q = s1Questions[s1CurIndex];
+
+            if (part) {
+                slot.className = "slot-target flex-1 min-w-[70px] sm:min-w-[100px] h-14 bg-indigo-500 text-white rounded-2xl border-2 border-indigo-600 flex flex-col items-center justify-center p-1 transition cursor-pointer shadow";
+                slot.innerHTML = `<span class="font-mono text-base font-bold">${part.text}</span><span class="text-[9px] opacity-80">${part.label}</span>`;
+            } else {
+                slot.className = "slot-target flex-1 min-w-[70px] sm:min-w-[100px] h-14 bg-white rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-1 transition cursor-pointer";
+                slot.innerHTML = `<span class="text-[10px] text-slate-400 font-bold">${slotIdx + 1}번째 자리</span><span class="text-xs text-indigo-400 font-bold">${q.parts[slotIdx].label.split('(')[0]}</span>`;
+            }
+        }
+
+        function resetStage1Blocks() {
+            const q = s1Questions[s1CurIndex];
+            s1UserSlots = new Array(q.parts.length).fill(null);
+            for (let i = 0; i < q.parts.length; i++) {
+                updateSlotDisplay(i);
+            }
+            q.parts.forEach(p => {
+                const el = document.getElementById(`block-${p.id}`);
+                if (el) el.classList.remove('hidden');
+            });
+            playSound('drop');
+        }
+
+        function checkStage1Answer() {
+            const q = s1Questions[s1CurIndex];
+            const feedback = document.getElementById('s1-feedback');
+
+            // 모든 슬롯이 찼는지 확인
+            if (s1UserSlots.includes(null)) {
+                feedback.className = "text-sm font-bold text-amber-600";
+                feedback.innerText = "⚠️ 빈자리가 있어요! 모든 블록을 순서대로 채워주세요.";
+                playSound('wrong');
+                return;
+            }
+
+            // 올바른 순서인지 확인
+            const isCorrect = s1UserSlots.every((part, idx) => part.id === q.parts[idx].id);
+
+            if (isCorrect) {
+                playSound('correct');
+                feedback.className = "text-sm font-bold text-emerald-600";
+                feedback.innerText = "🎉 대단해요! 완벽한 이메일 주소가 완성되었습니다!";
+                addScore(100);
+
+                setTimeout(() => {
+                    if (s1CurIndex + 1 < s1Questions.length) {
+                        s1CurIndex++;
+                        loadStage1Question(s1CurIndex);
+                    } else {
+                        playSound('complete');
+                        showModal("1단계 완료!", "이메일 주소의 기본 구조([아이디] + [@] + [도메인])를 완벽히 이해했어요!<br>이제 2단계 키보드 직접 입력에 도전해볼까요?", () => {
+                            startStage(2);
+                        });
+                    }
+                }, 1000);
+            } else {
+                playSound('wrong');
+                feedback.className = "text-sm font-bold text-rose-500";
+                feedback.innerText = "❌ 순서가 조금 달라졌어요! [아이디] ➔ [@] ➔ [도메인] 순서로 다시 맞춰보세요.";
+            }
+        }
+
+        const s2Questions = [
+            "teacher.kim@school.kr",
+            "happy_friend@naver.com",
+            "coding.robot@gmail.com"
+        ];
+        let s2CurIndex = 0;
+
+        function initStage2() {
+            s2CurIndex = 0;
+            loadStage2Question(s2CurIndex);
+        }
+
+        function loadStage2Question(index) {
+            document.getElementById('s2-cur-idx').innerText = index + 1;
+            const target = s2Questions[index];
+            document.getElementById('s2-target-text').innerText = target;
+            const inputEl = document.getElementById('s2-input');
+            inputEl.value = '';
+            inputEl.focus();
+
+            const helper = document.getElementById('s2-realtime-helper');
+            helper.innerText = '';
+            inputEl.oninput = () => validateS2InputRealtime(target);
+        }
+
+        function validateS2InputRealtime(target) {
+            const inputVal = document.getElementById('s2-input').value;
+            const helper = document.getElementById('s2-realtime-helper');
+
+            // 한글 포함 여부 체크
+            const koreanPattern = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/;
+            if (koreanPattern.test(inputVal)) {
+                helper.className = "text-xs text-rose-500 font-bold";
+                helper.innerHTML = "<i class='fa-solid fa-triangle-exclamation'></i> 영어 자판으로 바꿔주세요! (한/영 키 누르기)";
+                return;
+            }
+
+            // 공백(스페이스바) 체크
+            if (inputVal.includes(' ')) {
+                helper.className = "text-xs text-rose-500 font-bold";
+                helper.innerHTML = "<i class='fa-solid fa-triangle-exclamation'></i> 이메일 주소에는 띄어쓰기(공백)를 넣으면 안 돼요!";
+                return;
+            }
+
+            // 앞부분 일치 확인
+            if (target.startsWith(inputVal)) {
+                helper.className = "text-xs text-emerald-600 font-bold";
+                helper.innerHTML = `<i class='fa-solid fa-check'></i> 좋아요! 천천히 끝까지 입력해 보세요. (${inputVal.length} / ${target.length} 글자)`;
+            } else {
+                helper.className = "text-xs text-amber-600 font-bold";
+                helper.innerHTML = "<i class='fa-solid fa-pencil'></i> 어딘가 오타가 있어요. 글자를 다시 확인해 볼까요?";
+            }
+        }
+
+        function insertCharToS2(char) {
+            const inputEl = document.getElementById('s2-input');
+            inputEl.value += char;
+            inputEl.focus();
+            validateS2InputRealtime(s2Questions[s2CurIndex]);
+            playSound('drop');
+        }
+
+        function clearS2Input() {
+            const inputEl = document.getElementById('s2-input');
+            inputEl.value = '';
+            inputEl.focus();
+            document.getElementById('s2-realtime-helper').innerText = '';
+        }
+
+        function checkStage2Answer() {
+            const target = s2Questions[s2CurIndex];
+            const inputVal = document.getElementById('s2-input').value.trim();
+
+            if (inputVal === target) {
+                playSound('correct');
+                addScore(100);
+                if (s2CurIndex + 1 < s2Questions.length) {
+                    s2CurIndex++;
+                    showModal("정확한 배달!", `멋져요! "${target}" 주소를 오타 없이 완벽하게 입력했습니다.`, () => {
+                        loadStage2Question(s2CurIndex);
+                    });
+                } else {
+                    playSound('complete');
+                    showModal("2단계 마스터!", "영어 자판과 @(골뱅이), 마침표를 능숙하게 다루시네요!<br>이제 주소 속에 숨은 함정을 찾는 3단계 탐정소로 가볼까요?", () => {
+                        startStage(3);
+                    });
+                }
+            } else {
+                playSound('wrong');
+                showModal("오타가 발견되었어요!", `목표 주소:<br><b class="font-mono text-indigo-600">${target}</b><br><br>내 입력:<br><b class="font-mono text-rose-500">${inputVal || '(비어있음)'}</b><br><br>글자나 기호가 빠진 곳이 없는지 찬찬히 확인해 보세요.`);
+            }
+        }
+
+        const s3Problems = [
+            {
+                email: "chulsoo 2026@gmail.com",
+                choices: [
+                    "아이디 중간에 띄어쓰기(공백)가 들어가 있어요.",
+                    "@ 기호가 빠져 있어요.",
+                    "도메인 주소가 잘못되었어요.",
+                    "아무 문제가 없는 정상 주소예요."
+                ],
+                correctIdx: 0,
+                explanation: "💡 <b>핵심 규칙:</b> 이메일 주소에는 <b>절대 띄어쓰기를 넣을 수 없습니다.</b> 단어를 구분하고 싶을 때는 밑줄(_)이나 점(.)을 대신 써야 합니다."
+            },
+            {
+                email: "younghee@naver,com",
+                choices: [
+                    "영문 소문자가 대문자로 쓰였어요.",
+                    "마침표(.) 대신 쉼표(,)가 찍혀 있어요.",
+                    "@ 기호가 두 개 들어가 있어요.",
+                    "한글이 포함되어 있어요."
+                ],
+                correctIdx: 1,
+                explanation: "💡 <b>키보드 주의:</b> 키보드에서 쉼표(,)와 마침표(.)가 바로 옆에 붙어 있어서 오타가 자주 납니다. 꼭 <b>마침표(.)</b>를 눌러야 제대로 연결돼요!"
+            },
+            {
+                email: "minji_cat#gmail.com",
+                choices: [
+                    "아이디가 너무 짧아요.",
+                    "@ 대신 샵(#) 기호가 잘못 들어갔어요.",
+                    "gmail 뒤에 .com이 빠졌어요.",
+                    "정상 주소입니다."
+                ],
+                correctIdx: 1,
+                explanation: "💡 <b>구분 기호의 약속:</b> 인터넷 우체통에서는 오직 <b>골뱅이(@)</b>만이 아이디와 우체국(도메인)을 구분해 주는 유일한 약속 기호입니다."
+            },
+            {
+                email: "한국어사랑@daum.net",
+                choices: [
+                    "daum.net은 이메일 회사가 아니에요.",
+                    "아이디가 영문이 아닌 한글로 적혀 있어서 호환이 안 돼요.",
+                    ".net 대신 .com만 쓸 수 있어요.",
+                    "틀린 곳이 없어요."
+                ],
+                correctIdx: 1,
+                explanation: "💡 <b>전 세계 공용 규칙:</b> 전 세계 인터넷 서버와 편지를 안전하게 주고받으려면 아이디는 원칙적으로 <b>영문 알파벳과 숫자</b>로 만들어야 오류가 나지 않습니다!"
+            }
+        ];
+
+        let s3CurIndex = 0;
+
+        function initStage3() {
+            s3CurIndex = 0;
+            loadStage3Question(s3CurIndex);
+        }
+
+        function loadStage3Question(index) {
+            document.getElementById('s3-cur-idx').innerText = index + 1;
+            const p = s3Problems[index];
+            document.getElementById('s3-problem-email').innerText = p.email;
+
+            const choicesContainer = document.getElementById('s3-choices-container');
+            choicesContainer.innerHTML = '';
+
+            const explanationBox = document.getElementById('s3-explanation');
+            explanationBox.classList.add('hidden');
+            explanationBox.innerHTML = '';
+
+            document.getElementById('s3-next-btn').classList.add('hidden');
+
+            p.choices.forEach((choiceText, cIdx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3.5 bg-slate-50 hover:bg-indigo-50 border-2 border-slate-200 hover:border-indigo-300 rounded-2xl text-xs sm:text-sm font-semibold text-slate-700 transition active:scale-98 flex items-center gap-2";
+                btn.innerHTML = `<span class="w-6 h-6 rounded-full bg-white border border-slate-300 flex items-center justify-center text-xs font-bold text-slate-500">${cIdx + 1}</span> <span>${choiceText}</span>`;
+                btn.onclick = () => selectStage3Choice(cIdx, btn);
+                choicesContainer.appendChild(btn);
+            });
+        }
+
+        function selectStage3Choice(selectedIndex, clickedBtn) {
+            const p = s3Problems[s3CurIndex];
+            const choicesContainer = document.getElementById('s3-choices-container');
+            const buttons = choicesContainer.querySelectorAll('button');
+
+            // 버튼 비활성화
+            buttons.forEach(b => b.disabled = true);
+
+            const explanationBox = document.getElementById('s3-explanation');
+            explanationBox.classList.remove('hidden');
+            explanationBox.innerHTML = p.explanation;
+
+            if (selectedIndex === p.correctIdx) {
+                playSound('correct');
+                addScore(100);
+                clickedBtn.classList.remove('bg-slate-50', 'border-slate-200');
+                clickedBtn.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-900');
+            } else {
+                playSound('wrong');
+                clickedBtn.classList.remove('bg-slate-50', 'border-slate-200');
+                clickedBtn.classList.add('bg-rose-100', 'border-rose-500', 'text-rose-900');
+                // 정답 버튼 하이라이트
+                buttons[p.correctIdx].classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-900');
+            }
+
+            document.getElementById('s3-next-btn').classList.remove('hidden');
+        }
+
+        function nextStage3Question() {
+            if (s3CurIndex + 1 < s3Problems.length) {
+                s3CurIndex++;
+                loadStage3Question(s3CurIndex);
+            } else {
+                playSound('complete');
+                showModal("오타 수사 완료!", "축하합니다! 이메일 주소의 흔한 실수(공백, 쉼표, 한글, 특수기호)를 모두 꿰뚫어 보게 되었어요.<br>마지막 4단계에서 '나만의 이메일 명함'을 만들어 수료해 봅시다!", () => {
+                    startStage(4);
+                });
+            }
+        }
+
+        function initStage4() {
+            document.getElementById('s4-name').value = '';
+            document.getElementById('s4-id').value = '';
+            const domainSelect = document.getElementById('s4-domain-select');
+            domainSelect.value = 'icees.go.kr';
+            const customInput = document.getElementById('s4-custom-domain');
+            if (customInput) customInput.value = '';
+            handleDomainChange();
+        }
+
+        function handleDomainChange() {
+            const selectVal = document.getElementById('s4-domain-select').value;
+            const customBox = document.getElementById('s4-custom-domain-box');
+            if (selectVal === 'custom') {
+                customBox.classList.remove('hidden');
+                document.getElementById('s4-custom-domain').focus();
+            } else {
+                customBox.classList.add('hidden');
+            }
+            updateCardPreview();
+        }
+
+        function sanitizeAndPreviewCustomDomain() {
+            const domainInput = document.getElementById('s4-custom-domain');
+            // 도메인: 소문자, 숫자, 마침표(.), 하이픈(-)만 허용 (@나 공백 제거)
+            let sanitized = domainInput.value.toLowerCase().replace(/[^a-z0-9.-]/g, '');
+            if (domainInput.value !== sanitized) {
+                domainInput.value = sanitized;
+            }
+            updateCardPreview();
+        }
+
+        function getSelectedDomain() {
+            const selectVal = document.getElementById('s4-domain-select').value;
+            if (selectVal === 'custom') {
+                const customVal = document.getElementById('s4-custom-domain').value.trim();
+                return customVal || 'icees.go.kr';
+            }
+            return selectVal;
+        }
+
+        function sanitizeAndPreviewId() {
+            const idInput = document.getElementById('s4-id');
+            // 자동 소문자 변환 및 허용 문자(영문 소문자, 숫자, 점, 밑줄, 하이픈)만 남김
+            let sanitized = idInput.value.toLowerCase().replace(/[^a-z0-9._-]/g, '');
+            if (idInput.value !== sanitized) {
+                idInput.value = sanitized;
+            }
+            updateCardPreview();
+        }
+
+        function updateCardPreview() {
+            const name = document.getElementById('s4-name').value.trim() || "꿈나무 친구";
+            const id = document.getElementById('s4-id').value.trim() || "myid2026";
+            const domain = getSelectedDomain();
+
+            document.getElementById('preview-name').innerText = name;
+            const fullEmail = `${id}@${domain}`;
+            document.getElementById('preview-email').innerText = fullEmail;
+
+            // 체크리스트 점검
+            const checkAt = document.getElementById('s4-check-at');
+            const checkEng = document.getElementById('s4-check-eng');
+            const checkDomain = document.getElementById('s4-check-domain');
+
+            // 영문/숫자 검증
+            const hasValidId = /^[a-z0-9._-]+$/.test(id) && id.length >= 2;
+            if (hasValidId) {
+                checkEng.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i> 아이디가 올바른 영문/숫자 조합임 (${id.length}글자)`;
+            } else {
+                checkEng.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-500"></i> 2글자 이상의 영문 소문자/숫자를 적어주세요`;
+            }
+
+            checkAt.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i> 골뱅이(@)로 안전하게 연결됨`;
+
+            // 도메인 검증 (마침표가 포함되어 있는지)
+            const hasValidDomain = domain.includes('.') && domain.length >= 4 && !domain.startsWith('.') && !domain.endsWith('.');
+            if (checkDomain) {
+                if (hasValidDomain) {
+                    checkDomain.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i> 올바른 도메인 주소 형식 (@${domain})`;
+                } else {
+                    checkDomain.innerHTML = `<i class="fa-solid fa-circle-xmark text-amber-600"></i> 도메인에 마침표(.)를 포함해 끝까지 적어주세요`;
+                }
+            }
+        }
+
+        function finalizeCard() {
+            const name = document.getElementById('s4-name').value.trim();
+            const id = document.getElementById('s4-id').value.trim();
+            const domain = getSelectedDomain();
+
+            if (!name) {
+                playSound('wrong');
+                showModal("이름을 입력해 주세요", "명함에 들어갈 멋진 내 이름이나 별명을 먼저 입력해 주세요!");
+                return;
+            }
+
+            if (!id || id.length < 2) {
+                playSound('wrong');
+                showModal("아이디를 입력해 주세요", "학교나 교육청에서 받은 영어 아이디를 입력해 주세요!");
+                return;
+            }
+
+            if (!domain.includes('.') || domain.length < 4 || domain.endsWith('.')) {
+                playSound('wrong');
+                showModal("도메인을 확인해 주세요", "도메인 주소(우체국 주소)가 올바르지 않습니다.<br>예: <b class='text-indigo-600'>icees.go.kr</b> 처럼 마침표(.)를 꼭 넣어주세요.");
+                return;
+            }
+
+            const fullEmail = `${id}@${domain}`;
+            playSound('complete');
+            addScore(200);
+
+            showModal("🎉 이메일 면허 취득 완료!", `
+                <div class="space-y-3">
+                    <p class="text-sm text-slate-700">
+                        축하합니다! <b>${name}</b> 학생은 이메일 주소의 규칙을 모두 통과하여 <b>[디지털 특급 배달부]</b> 자격을 획득했습니다!
+                    </p>
+                    <div class="bg-indigo-50 border border-indigo-200 p-2.5 rounded-xl font-mono text-sm font-bold text-indigo-700">
+                        ${fullEmail}
+                    </div>
+                    <p class="text-xs text-slate-500">
+                        이제 실제 학교 구글 메일 수업에서도 당황하지 않고 내 주소를 똑똑하게 활용할 수 있을 거예요!
+                    </p>
+                </div>
+            `, () => {
+                goToStage(0);
+            });
+        }
+
+        function copyGeneratedEmail() {
+            const email = document.getElementById('preview-email').innerText.trim();
+            const tempInput = document.createElement("input");
+            tempInput.value = email;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+
+            playSound('drop');
+            showModal("주소 복사 완료!", `내 이메일 주소(<b>${email}</b>)가 클립보드에 복사되었습니다.<br>실제 메일함 '받는 사람' 창에 붙여넣어 보세요!`);
+        }
+
+        let modalCallback = null;
+
+        function showModal(title, descHtml, callback = null) {
+            document.getElementById('modal-title').innerHTML = title;
+            document.getElementById('modal-desc').innerHTML = descHtml;
+            modalCallback = callback;
+            
+            const modal = document.getElementById('custom-modal');
+            modal.classList.remove('hidden');
+
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            // 기존 이벤트 핸들러 초기화 후 안전하게 재바인딩
+            confirmBtn.onclick = function(e) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                closeModal();
+            };
+
+            // 모달 열릴 때 확인 버튼으로 즉시 포커스 이동 (Enter/Space 키로도 바로 넘어감)
+            setTimeout(() => {
+                confirmBtn.focus();
+            }, 50);
+        }
+
+        function handleBackdropClick(e) {
+            // 배경을 탭/클릭해도 닫힐 수 있도록 유연한 UX 제공
+            if (e.target.id === 'custom-modal') {
+                closeModal();
+            }
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('custom-modal');
+            if (modal.classList.contains('hidden')) return;
+            
+            modal.classList.add('hidden');
+            if (typeof modalCallback === 'function') {
+                const cb = modalCallback;
+                modalCallback = null;
+                cb();
+            }
+        }
+
+        // 키보드 엔터나 ESC로도 모달을 편하게 닫을 수 있도록 이벤트 추가
+        window.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('custom-modal');
+            if (!modal.classList.contains('hidden')) {
+                if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') {
+                    e.preventDefault();
+                    closeModal();
+                }
+            }
+        });
+
+        // 초기 시작
+        window.onload = function() {
+            goToStage(0);
+        };
+    </script>
+</body>
+</html>
